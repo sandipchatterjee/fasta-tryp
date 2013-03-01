@@ -4,6 +4,11 @@
 ##	For generating a nonredundant peptide database in FASTA format from an input FASTA-formatted protein database
 ##	Sandip Chatterjee
 
+######	to do:
+######	account for proline in trypsin digest
+######	account for half-tryptic peptides?
+######	change dictionary to incorporate start site within protein instead of full protein sequence
+
 import sys
 import pprint	##	Pretty Print
 
@@ -37,11 +42,11 @@ def trypsinDigest(protSeq):
 ###################################################################################################
 
 ##	sample protein data
-sampleProtein = "MSGSAAETQAPEQISGGWTPVVEETPAPPAPPVRRRGVPAGPVIIAAGEAGVMAGSSLYAAAGVPGLIAAGAVAGTAAAARTVRVAQRRAASRASTSGGGAGRGRSGSGPVPAALRRLAGAGRRRGAGGGPGTGKGAGTGTGTGRRRRGAGTGRRPGSGRAGGAAGRTAGGRRAGGGPLTRAARGTGGQAARAARRSGAAAVRAARLRGAGMVRAARIGRSAAGRLAAAVRQARSPWAAARAARRGRYRMVAGQRRRRGGGLGRLVRTGLGLLAALAAVGWWLGHRGWRLTRAGWRRLRGPRPGPDGRPGTDLIGPLAQLRTPPIGGPAAPVPPPAGGGAMDPQAILAGARAALAGVAFATFGRLPEMPEMPPIPGGPVASLMPGHDRGDAAMAARDRDGRSLAGGSGGVFLLPEQAETMMQTAAAYAPPSGPQIGRDMAQVPQAVEHIAAAIAGLSRLAADELPVHETIRELLDSAAAQIVAAAGTLANLGPLFELVHQTDLHRLRQPRPGEGLWDSHHAGDA"
-samplePeptides = trypsinDigest(sampleProtein)
-sampleFastaPeptides = [">gi|13449237|ref|NP_085453.1| hypothetical protein pFQ12_p05 [Frankia sp. CpI1]", samplePeptides]
+#sampleProtein = "MSGSAAETQAPEQISGGWTPVVEETPAPPAPPVRRRGVPAGPVIIAAGEAGVMAGSSLYAAAGVPGLIAAGAVAGTAAAARTVRVAQRRAASRASTSGGGAGRGRSGSGPVPAALRRLAGAGRRRGAGGGPGTGKGAGTGTGTGRRRRGAGTGRRPGSGRAGGAAGRTAGGRRAGGGPLTRAARGTGGQAARAARRSGAAAVRAARLRGAGMVRAARIGRSAAGRLAAAVRQARSPWAAARAARRGRYRMVAGQRRRRGGGLGRLVRTGLGLLAALAAVGWWLGHRGWRLTRAGWRRLRGPRPGPDGRPGTDLIGPLAQLRTPPIGGPAAPVPPPAGGGAMDPQAILAGARAALAGVAFATFGRLPEMPEMPPIPGGPVASLMPGHDRGDAAMAARDRDGRSLAGGSGGVFLLPEQAETMMQTAAAYAPPSGPQIGRDMAQVPQAVEHIAAAIAGLSRLAADELPVHETIRELLDSAAAQIVAAAGTLANLGPLFELVHQTDLHRLRQPRPGEGLWDSHHAGDA"
+#samplePeptides = trypsinDigest(sampleProtein)
+#sampleFastaPeptides = [">gi|13449237|ref|NP_085453.1| hypothetical protein pFQ12_p05 [Frankia sp. CpI1]", samplePeptides]
 
-sampleFastaRecord = [sampleFastaPeptides[0],sampleProtein]
+#sampleFastaRecord = [sampleFastaPeptides[0],sampleProtein]
 
 ###################################################################################################
 
@@ -156,13 +161,21 @@ def readFasta():
 	outputFile.close()
 	inputFile.close()
 
-	inputFile = open('reformatted_'+fileName, "r")
+	inputFile = open('reformatted_'+fileName, "r")	##	read in properly formatted FASTA file (one line per protein sequence)
 	inputFile.readline()							##	read blank line at beginning of reformatted file
-	tempLine = ''
 
-	fastaRecord.append(inputFile.readline().strip('\n'))	##	info line of FASTA record ('>')
-	fastaRecord.append(inputFile.readline().strip('\n'))	##	sequence line of FASTA record
-	allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
+	while True:
+		line1 = inputFile.readline().strip('\n')
+		line2 = inputFile.readline().strip('\n')
+		if not line1:
+			break
+		fastaRecord.append(line1)	##	info line of FASTA record ('>')
+		fastaRecord.append(line2)	##	sequence line of FASTA record
+		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
+		print "fastaRecord", fastaRecord
+		fastaRecord = []
+		print "ran while loop once"
+
 
 #	for lineNumber in range(outputFileLength/2+1):		##	need to read in file lines in groups of 2...
 #		fastaRecord = []
@@ -174,8 +187,8 @@ def readFasta():
 
 #	fastaRecord[0] = inputFile.readline().strip('\n')
 
-	print "fastaRecord:"
-	print fastaRecord
+#	print "fastaRecord:"
+#	print fastaRecord
 
 
 
