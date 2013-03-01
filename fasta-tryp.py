@@ -22,12 +22,10 @@ allPeptides = {}
 ##	function trypsinDigest
 ##	input: protein sequence (string, case-insensitive)
 ##	output: tryptic peptides from input protein sequence (list of peptides, upper-case)
-############# need to account for presence of proline #############
-
+############# need to account for presence of proline #############################################
 ##	Info from Expasy:
 ##	Preferentially cleaves at Arg and Lys in position P1 with higher rates for Arg (Keil, 1992), especially at high pH (but treated equally in the program). Pro usually blocks the action when found in position P1', but not when Lys is in position P1 and Trp is in position P2 at the same time. This blocking of cleavage exerted by Pro in position P1' is also negligible when Arg is in position P1 and Met is in position P2 at the same time (other reports say that the block exhibited by Pro can be circumvented by Glu being in P2). 
 
-############# can probably filter out peptides below a certain length (maybe... 6 amino acids?) #############
 def trypsinDigest(protSeq):
 	
 	trypticPeptides = protSeq.replace('K','K_').replace('R','R_').split('_')
@@ -95,8 +93,7 @@ def parseFastaRecord(fastaRecord):
 ##	output list format: Dictionary in which each Peptide sequence (key) is mapped to a list of length >= 1
 ##	output list format: Each list item is a dictionary of information containing the source of the peptide
 ##	output list format: One peptide may map to one or more proteins
-############# need to see what data should be extracted from the first > line of the FASTA entry... #############
-############# eventually need to have more information about each key (more than just parent protein) -- start site in protein sequence, bacterial species/organism ID, etc. #############
+############# need to append protein info for redundant peptides!! #############
 def registerPeptides(fastaRecord):
 	for peptide in fastaRecord[1]:
 		if peptide not in allPeptides:
@@ -105,7 +102,7 @@ def registerPeptides(fastaRecord):
 			print "Redundant peptide"
 #			print fastaRecord[0]		#remove
 
-	print "END"
+	print "Done registering peptides"
 
 	return allPeptides
 
@@ -113,7 +110,7 @@ def registerPeptides(fastaRecord):
 
 
 ##	function readFasta()
-##	Reads in all entries from a protein FASTA-format file
+##	Reads in all entries from a protein FASTA-format file (one entry at a time)
 ##	Calls function parseFastaRecord() for each imported record
 ##	Calls registerPeptides() for each parsedFastaRecord
 ##	input: FASTA-formatted record file
@@ -124,21 +121,65 @@ def readFasta():
 	fastaRecord = []
 	inputFile = open(fileName, "r")
 
-	for fileLine in inputFile:					##	read entire file into list... probably a bad idea
-		fileList.append(fileLine)
+#	for fileLine in inputFile:					##	read entire file into list... probably a bad idea
+#		fileList.append(fileLine)
 
-	for fileLine in fileList:
-		if '>' in fileLine:						##	store each FASTA Record in 2-item list "fastaRecord" temporarily
-			fastaRecord.append(fileLine)
+#	for fileLine in fileList:
+#		if '>' in fileLine:						##	store each FASTA Record in 2-item list "fastaRecord" temporarily
+#			fastaRecord.append(fileLine)
+
+#	fastaRecord.append(inputFile.readline().strip('\n'))	##	read first '>' line of file
+#	if '>' not in fastaRecord[0]:
+#		print "Not a properly formatted FASTA file."
+#		sys.exit()
+
+#	tempSequence = ''
+#	for line in inputFile:
+#		if '>' not in line:
+#			tempSequence = tempSequence+line.strip('\n')	##	concatenate each sequence line into one string variable
+#		else:
+#			fastaRecord.append(tempSequence)				##	add finished sequence to fastaRecord
+#			tempSequence = ''
+#			allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
+#			fastaRecord.append(line.strip('\n'))		## need to save this value somehow. This is the next > line
 	
-			print "fastaRecord:"
-			print fastaRecord
+	outputFile = open('reformatted_'+fileName, "w")
+
+	for line in inputFile:				##	generates a properly formatted FASTA file. InfoLine ('>') on one line, entire sequence on next line
+		if '>' in line:
+			outputFile.write('\n')		##	keep in mind that this prints a blank line at the beginning of the reformatted file
+			outputFile.write(line)
+		else:
+			outputFile.write(line.strip('\n').strip('\t'))
+	outputFileLength = outputFile.tell()
+	print "outputFileLength", outputFileLength
+	outputFile.close()
+	inputFile.close()
+
+	inputFile = open('reformatted_'+fileName, "r")
+	inputFile.readline()							##	read blank line at beginning of reformatted file
+	tempLine = ''
+
+	fastaRecord.append(inputFile.readline().strip('\n'))	##	info line of FASTA record ('>')
+	fastaRecord.append(inputFile.readline().strip('\n'))	##	sequence line of FASTA record
+	allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
+
+#	for lineNumber in range(outputFileLength/2+1):		##	need to read in file lines in groups of 2...
+#		fastaRecord = []
+#		for pair in range(2):
+#			fastaRecord.append(inputFile.readline().strip('\n'))
+#		print "fastaRecord", fastaRecord
+#		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
+	inputFile.close()
+
+#	fastaRecord[0] = inputFile.readline().strip('\n')
+
+	print "fastaRecord:"
+	print fastaRecord
 
 
 
 #		parsedFastaRecord = parseFastaRecord(fastaRecord)	##	then call parseFastaRecord(fastaRecord)
-
-	inputFile.close()
 
 	return allPeptides
 
@@ -152,7 +193,7 @@ def readFasta():
 readFasta()
 
 print "----------------------------------------------------------"
-#print "allPeptides dictionary: "
+print "allPeptides dictionary: "
 #print allPeptides
 
 pp = pprint.PrettyPrinter()
@@ -162,7 +203,7 @@ print "length of dictionary: "
 print len(allPeptides)
 
 print "----------------------------------------------------------"
-print allPeptides
+#print allPeptides
 
 #registerPeptides(sampleFastaPeptides)
 
