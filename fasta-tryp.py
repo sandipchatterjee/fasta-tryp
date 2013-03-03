@@ -7,7 +7,6 @@
 ######	to do:
 ######	account for half-tryptic peptides?
 ######	change dictionary to incorporate start site within protein instead of full protein sequence
-######	output function
 
 import sys
 import pprint	##	Pretty Print
@@ -163,28 +162,6 @@ def readFasta():
 	fileList = []
 	fastaRecord = []
 	inputFile = open(fileName, "r")
-
-#	for fileLine in inputFile:					##	read entire file into list... probably a bad idea
-#		fileList.append(fileLine)
-
-#	for fileLine in fileList:
-#		if '>' in fileLine:						##	store each FASTA Record in 2-item list "fastaRecord" temporarily
-#			fastaRecord.append(fileLine)
-
-#	fastaRecord.append(inputFile.readline().strip('\n'))	##	read first '>' line of file
-#	if '>' not in fastaRecord[0]:
-#		print "Not a properly formatted FASTA file."
-#		sys.exit()
-
-#	tempSequence = ''
-#	for line in inputFile:
-#		if '>' not in line:
-#			tempSequence = tempSequence+line.strip('\n')	##	concatenate each sequence line into one string variable
-#		else:
-#			fastaRecord.append(tempSequence)				##	add finished sequence to fastaRecord
-#			tempSequence = ''
-#			allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
-#			fastaRecord.append(line.strip('\n'))		## need to save this value somehow. This is the next > line
 	
 	outputFile = open('reformatted_'+fileName, "w")
 
@@ -210,25 +187,9 @@ def readFasta():
 		fastaRecord.append(line1)	##	info line of FASTA record ('>')
 		fastaRecord.append(line2)	##	sequence line of FASTA record
 		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
-#		print "fastaRecord", fastaRecord
 		fastaRecord = []
 
-#	for lineNumber in range(outputFileLength/2+1):		##	need to read in file lines in groups of 2...
-#		fastaRecord = []
-#		for pair in range(2):
-#			fastaRecord.append(inputFile.readline().strip('\n'))
-#		print "fastaRecord", fastaRecord
-#		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
 	inputFile.close()
-
-#	fastaRecord[0] = inputFile.readline().strip('\n')
-
-#	print "fastaRecord:"
-#	print fastaRecord
-
-
-
-#		parsedFastaRecord = parseFastaRecord(fastaRecord)	##	then call parseFastaRecord(fastaRecord)
 
 	return allPeptides
 
