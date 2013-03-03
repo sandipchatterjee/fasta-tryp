@@ -79,15 +79,6 @@ def trypsinDigest(protSeq):
 
 ###################################################################################################
 
-##	sample protein data
-#sampleProtein = "MSGSAAETQAPEQISGGWTPVVEETPAPPAPPVRRRGVPAGPVIIAAGEAGVMAGSSLYAAAGVPGLIAAGAVAGTAAAARTVRVAQRRAASRASTSGGGAGRGRSGSGPVPAALRRLAGAGRRRGAGGGPGTGKGAGTGTGTGRRRRGAGTGRRPGSGRAGGAAGRTAGGRRAGGGPLTRAARGTGGQAARAARRSGAAAVRAARLRGAGMVRAARIGRSAAGRLAAAVRQARSPWAAARAARRGRYRMVAGQRRRRGGGLGRLVRTGLGLLAALAAVGWWLGHRGWRLTRAGWRRLRGPRPGPDGRPGTDLIGPLAQLRTPPIGGPAAPVPPPAGGGAMDPQAILAGARAALAGVAFATFGRLPEMPEMPPIPGGPVASLMPGHDRGDAAMAARDRDGRSLAGGSGGVFLLPEQAETMMQTAAAYAPPSGPQIGRDMAQVPQAVEHIAAAIAGLSRLAADELPVHETIRELLDSAAAQIVAAAGTLANLGPLFELVHQTDLHRLRQPRPGEGLWDSHHAGDA"
-#samplePeptides = trypsinDigest(sampleProtein)
-#sampleFastaPeptides = [">gi|13449237|ref|NP_085453.1| hypothetical protein pFQ12_p05 [Frankia sp. CpI1]", samplePeptides]
-
-#sampleFastaRecord = [sampleFastaPeptides[0],sampleProtein]
-
-###################################################################################################
-
 ##	function parseFastaRecord(fastaRecord)
 ##	input: a single FASTA record from a FASTA protein file (two-item list)
 ##	output: a two-item list with the format [{'NCBIID':VALUE, 'proteinName':VALUE, 'organismID':VALUE, 'protSeq':VALUE}, [PEPTIDE1, PEPTIDE2, PEPTIDE3, ...]]
