@@ -237,16 +237,63 @@ def readFasta():
 ##	function outputFasta(allPeptides)
 ##	Outputs contents of allPeptides dictionary to FASTA formatted-file
 ##	input: complete allPeptides dictionary
-##	output: FASTA file
+##	output: FASTA file and index file
+
+##	format of FASTA file:
+##	>PEPTIDE1
+##	TRYPTICPEPTIDESEQUENCE1
+##	>PEPTIDE2
+##	TRYPTICPEPTIDESEQUENCE2
+##	...
+
+##	format of index file:
+##	>PEPTIDE1
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	>PEPTIDE2
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	>PEPTIDE3
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	>PEPTIDE4
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	...
 
 def outputFasta(allPeptides):
 
-	outputFile = open(sys.argv[1].rstrip('fasta')+'_peptides_nonredundant'+'.fasta', 'w')
+	##	generate FASTA file
+	outputFastaFile = open(sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fasta', 'w')
 
+	peptideCount = 1
 	for key in allPeptides:
-		outputFile.write('>'+'\n')
+		outputFastaFile.write('>'+'peptide'+str(peptideCount)+'\n')
+		peptideCount += 1
+		outputFastaFile.write(key+'\n')
 
-	outputFile.close()
+	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fasta'
+	outputFastaFile.close()
+
+	##	generate index file
+	outputIndexFile = open(sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex', 'w')
+
+	peptideCount = 1
+	for key in allPeptides:
+		outputIndexFile.write('>'+'peptide'+str(peptideCount)+'\n')
+		peptideCount += 1
+		for item in range(len(allPeptides[key])):
+			outputIndexFile.write(allPeptides[key][item]['NCBIID'])
+			outputIndexFile.write(',')
+			outputIndexFile.write(allPeptides[key][item]['proteinName'])
+			outputIndexFile.write(',')
+			outputIndexFile.write(allPeptides[key][item]['organismID'])
+			outputIndexFile.write(',')
+			outputIndexFile.write(allPeptides[key][item]['protSeq'])
+			outputIndexFile.write(',')
+			outputIndexFile.write('\n')
+
+	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex'
+	outputIndexFile.close()
 
 ###################################################################################################
 
@@ -258,15 +305,13 @@ print "allPeptides dictionary: "
 #print allPeptides
 
 pp = pprint.PrettyPrinter()
-pp.pprint(allPeptides)
+#pp.pprint(allPeptides)
 
 print "length of dictionary: (number of unique peptides) "
 print len(allPeptides)
 
 print "----------------------------------------------------------"
 #print allPeptides
-
-#registerPeptides(sampleFastaPeptides)
 
 ###################################################################################################
 
