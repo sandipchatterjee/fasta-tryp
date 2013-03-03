@@ -5,9 +5,9 @@
 ##	Sandip Chatterjee
 
 ######	to do:
-######	account for proline in trypsin digest
 ######	account for half-tryptic peptides?
 ######	change dictionary to incorporate start site within protein instead of full protein sequence
+######	output function
 
 import sys
 import pprint	##	Pretty Print
@@ -27,13 +27,52 @@ allPeptides = {}
 ##	function trypsinDigest
 ##	input: protein sequence (string, case-insensitive)
 ##	output: tryptic peptides from input protein sequence (list of peptides, upper-case)
-############# need to account for presence of proline #############################################
-##	Info from Expasy:
-##	Preferentially cleaves at Arg and Lys in position P1 with higher rates for Arg (Keil, 1992), especially at high pH (but treated equally in the program). Pro usually blocks the action when found in position P1', but not when Lys is in position P1 and Trp is in position P2 at the same time. This blocking of cleavage exerted by Pro in position P1' is also negligible when Arg is in position P1 and Met is in position P2 at the same time (other reports say that the block exhibited by Pro can be circumvented by Glu being in P2). 
+##	
+##	Info from Expasy Peptide Cutter (http://web.expasy.org/peptide_cutter/peptidecutter_enzymes.html#Tryps):
+##	Preferentially cleaves at Arg and Lys in position P1 with higher rates for Arg (Keil, 1992), especially at high pH (but treated equally in the program). 
+##	
+##	SPECIAL CASES FOR PROLINE AT P1':
+##	Pro usually blocks the action when found in position P1', 
+##	but not when Lys is in position P1 and Trp is in position P2 at the same time. 
+##	This blocking of cleavage exerted by Pro in position P1' is also negligible when Arg is in position P1 and Met is in position P2 at the same time 
+##	
+##	SPECIAL CASES FOR LYSINE AT P1:
+##	Furthermore, if Lys is found in position P1 the following situation considerably block the action of trypsin: 
+##	Either Asp in position P2 and Asp in position P1' or 
+##	Cys in position P2 and Asp in position P1' or 
+##	Cys in position P2 and His in position P1' or 
+##	Cys in position P2 and Tyr in position P1'. 
+##	
+##	SPECIAL CASES FOR ARGININE AT P1:
+##	A likewise considerable block of trypsin action is seen when Arg is in P1 and the following situations are found: 
+##	Either Arg in position P2 and His in position P1' or 
+##	Cys in position P2 and Lys in position P1' or 
+##	Arg in position P2 and Arg in position P1'.
+
 
 def trypsinDigest(protSeq):
 	
-	trypticPeptides = protSeq.replace('K','K_').replace('R','R_').split('_')
+	trypticProtSeq = protSeq.upper().replace('K','K_').replace('R','R_')	##	define all Lys, Arg potential cleavage sites as '_'
+
+	##	special cases for trypsin cleavage with proline at P1'
+	trypticProtSeq = trypticProtSeq.replace('_P','P')		##	if P1' residue (C-terminal to cleavage site) is Proline, remove cleavage site
+	trypticProtSeq = trypticProtSeq.replace('WKP','WK_P')	##	if P1 is K and P2 is W, Proline at P1' will not block cleavage
+	trypticProtSeq = trypticProtSeq.replace('MRP','MR_P')	##	if P1 is R and P2 is M, Proline at P1' will not block cleavage
+
+	##	special cases for trypsin cleavage with lysine at P1
+	trypticProtSeq = trypticProtSeq.replace('DK_D','DKD')		##	if P1 is K, P2 is D, and P1' is D, remove cleavage site
+	trypticProtSeq = trypticProtSeq.replace('CK_D','CKD')		##	if P1 is K, P2 is C, and P1' is D, remove cleavage site
+	trypticProtSeq = trypticProtSeq.replace('CK_H','CKH')		##	if P1 is K, P2 is C, and P1' is H, remove cleavage site
+	trypticProtSeq = trypticProtSeq.replace('CK_Y','CKY')		##	if P1 is K, P2 is C, and P1' is Y, remove cleavage site
+
+	##	special cases for trypsin cleavage with arginine at P1
+	trypticProtSeq = trypticProtSeq.replace('R_R_H','R_RH')		##	if P1 is R, P2 is R, and P1' is H, remove cleavage site
+	##	want to keep R_RH but not RR_H
+	trypticProtSeq = trypticProtSeq.replace('CR_K','CRK')		##	if P1 is R, P2 is C, and P1' is K, remove cleavage site
+	trypticProtSeq = trypticProtSeq.replace('R_R_R','R_RR')		##	if P1 is R, P2 is R, and P1' is R, remove cleavage site
+	##	want to keep R_RR but not RR_R
+
+	trypticPeptides = trypticProtSeq.split('_')		##	cleave at all sites in protSeq marked by '_'
 
 	trypticPeptides = filter(lambda x: len(x)>6,trypticPeptides)			##	only keep tryptic peptides with length > 6
 
@@ -102,10 +141,9 @@ def parseFastaRecord(fastaRecord):
 def registerPeptides(fastaRecord):
 	for peptide in fastaRecord[1]:
 		if peptide not in allPeptides:
-				allPeptides[peptide] = [fastaRecord[0]]		##	creating a list of dictionaries for each peptide in allPeptides dictionary
-		else:											## in this case, need to *append* the PROTEIN INFO DICTIONARY to allPeptides[peptide]
-			print "Redundant peptide"
-#			print fastaRecord[0]		#remove
+			allPeptides[peptide] = [fastaRecord[0]]		##	creating a list of dictionaries for each peptide in allPeptides dictionary
+		else:												## in this case, need to *append* the PROTEIN INFO DICTIONARY to allPeptides[peptide]
+			allPeptides[peptide].append(fastaRecord[0])	##	append a dictionary with info for new protein to peptide key
 
 	print "Done registering peptides"
 
@@ -172,10 +210,8 @@ def readFasta():
 		fastaRecord.append(line1)	##	info line of FASTA record ('>')
 		fastaRecord.append(line2)	##	sequence line of FASTA record
 		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
-		print "fastaRecord", fastaRecord
+#		print "fastaRecord", fastaRecord
 		fastaRecord = []
-		print "ran while loop once"
-
 
 #	for lineNumber in range(outputFileLength/2+1):		##	need to read in file lines in groups of 2...
 #		fastaRecord = []
@@ -198,12 +234,24 @@ def readFasta():
 
 ###################################################################################################
 
-#parsedFastaRecord = parseFastaRecord(sampleFastaRecord)		## remove later
-#allPeptides = registerPeptides(parsedFastaRecord)
+##	function outputFasta(allPeptides)
+##	Outputs contents of allPeptides dictionary to FASTA formatted-file
+##	input: complete allPeptides dictionary
+##	output: FASTA file
+
+def outputFasta(allPeptides):
+
+	outputFile = open(sys.argv[1].rstrip('fasta')+'_peptides_nonredundant'+'.fasta', 'w')
+
+	for key in allPeptides:
+		outputFile.write('>'+'\n')
+
+	outputFile.close()
 
 ###################################################################################################
 
 readFasta()
+outputFasta(allPeptides)
 
 print "----------------------------------------------------------"
 print "allPeptides dictionary: "
@@ -212,7 +260,7 @@ print "allPeptides dictionary: "
 pp = pprint.PrettyPrinter()
 pp.pprint(allPeptides)
 
-print "length of dictionary: "
+print "length of dictionary: (number of unique peptides) "
 print len(allPeptides)
 
 print "----------------------------------------------------------"
