@@ -6,10 +6,11 @@
 
 ######	to do:
 ######	account for half-tryptic peptides?
-######	change dictionary to incorporate start site within protein instead of full protein sequence
+######	output index file in a more standard database format?
 
 import sys
 import pprint	##	Pretty Print
+import json
 
 if len(sys.argv) != 2:
 	print 'Need one argument -- a filename'
@@ -81,7 +82,7 @@ def trypsinDigest(protSeq):
 
 ##	function parseFastaRecord(fastaRecord)
 ##	input: a single FASTA record from a FASTA protein file (two-item list)
-##	output: a two-item list with the format [{'NCBIID':VALUE, 'proteinName':VALUE, 'organismID':VALUE, 'protSeq':VALUE}, [PEPTIDE1, PEPTIDE2, PEPTIDE3, ...]]
+##	output: a two-item list with the format [{'NCBIID':VALUE, 'proteinName':VALUE, 'organismID':VALUE, 'protSeq':VALUE, 'protPosition': -2}, [PEPTIDE1, PEPTIDE2, PEPTIDE3, ...]]
 ##	output details: calls trypsinDigest() function using given protein sequence from fastaRecord
 
 #################### This probably isn't the best way to split the informational line... using Split('[') -- because not every entry has brackets ######################
@@ -112,7 +113,7 @@ def parseFastaRecord(fastaRecord):
 
 	## construct dictionary
 
-	parsedFastaRecord = [{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}, trypsinDigest(protSeq)]
+	parsedFastaRecord = [{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq, 'protPosition': -2}, trypsinDigest(protSeq)]
 
 	return parsedFastaRecord
 
@@ -123,19 +124,37 @@ def parseFastaRecord(fastaRecord):
 ##	input: FASTA record (modified; Python list)
 ##	input list format: [{'NCBIID':VALUE, 'proteinName':VALUE, 'organismID':VALUE, 'protSeq':VALUE}, [PEPTIDE1, PEPTIDE2, PEPTIDE3, ...]]
 ##	output: allPeptides dictionary with added peptide entries
-##	output list format: {'PEPTIDESEQUENCE':[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}, ...]}
+##	output list format: {'PEPTIDESEQUENCE':[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT}, ...]}
 ##	output list format: Dictionary in which each Peptide sequence (key) is mapped to a list of length >= 1
 ##	output list format: Each list item is a dictionary of information containing the source of the peptide
 ##	output list format: One peptide may map to one or more proteins
 ############# need to append protein info for redundant peptides!! #############
 def registerPeptides(fastaRecord):
-	for peptide in fastaRecord[1]:
-		if peptide not in allPeptides:
-			allPeptides[peptide] = [fastaRecord[0]]		##	creating a list of dictionaries for each peptide in allPeptides dictionary
-		else:												## in this case, need to *append* the PROTEIN INFO DICTIONARY to allPeptides[peptide]
-			allPeptides[peptide].append(fastaRecord[0])	##	append a dictionary with info for new protein to peptide key
 
-	print "Done registering peptides"
+	print "allPeptides, before registering"
+	pp1 = pprint.PrettyPrinter()
+	pp1.pprint(allPeptides)
+
+	for peptide in fastaRecord[1]:
+		if peptide in allPeptides:
+
+			NCBIIDTemp = fastaRecord[0]['NCBIID']
+			proteinNameTemp = fastaRecord[0]['proteinName']
+			organismIDTemp = fastaRecord[0]['organismID']
+			protPositionTemp = fastaRecord[0]['protSeq'].find(peptide)
+
+			allPeptides[peptide].append({'NCBIID': NCBIIDTemp,'proteinName': proteinNameTemp, 'organismID': organismIDTemp,'protPosition': protPositionTemp})
+		else:
+			allPeptides[peptide] = []
+
+			NCBIIDTemp = fastaRecord[0]['NCBIID']
+			proteinNameTemp = fastaRecord[0]['proteinName']
+			organismIDTemp = fastaRecord[0]['organismID']
+			protPositionTemp = fastaRecord[0]['protSeq'].find(peptide)
+			allPeptides[peptide].append({'NCBIID': NCBIIDTemp,'proteinName': proteinNameTemp, 'organismID': organismIDTemp,'protPosition': protPositionTemp})
+
+			pp1 = pprint.PrettyPrinter()	#remove
+			pp1.pprint(allPeptides)			#remove
 
 	return allPeptides
 
@@ -200,16 +219,16 @@ def readFasta():
 
 ##	format of index file:
 ##	>PEPTIDE1
-##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT}]
 ##	>PEPTIDE2
-##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
-##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT}]
 ##	>PEPTIDE3
-##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT}]
 ##	>PEPTIDE4
-##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
-##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq},
-##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq}]
+##	[{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT},
+##	{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protPosition': INT}]
 ##	...
 
 def outputFasta(allPeptides):
@@ -240,8 +259,7 @@ def outputFasta(allPeptides):
 			outputIndexFile.write(',')
 			outputIndexFile.write(allPeptides[key][item]['organismID'])
 			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['protSeq'])
-			outputIndexFile.write(',')
+			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))
 			outputIndexFile.write('\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex'
@@ -257,7 +275,7 @@ print "allPeptides dictionary: "
 #print allPeptides
 
 pp = pprint.PrettyPrinter()
-#pp.pprint(allPeptides)
+pp.pprint(allPeptides)
 
 print "length of dictionary: (number of unique peptides) "
 print len(allPeptides)
