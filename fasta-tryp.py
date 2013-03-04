@@ -244,7 +244,10 @@ def outputFasta(allPeptides):
 			outputIndexFile.write(',')
 			outputIndexFile.write(allPeptides[key][item]['proteinName'])	##	Protein Name
 			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['organismID'])		##	Organism Name
+			if allPeptides[key][item]['organismID'] == None:
+				outputIndexFile.write('')								##	if no Organism Name in original FASTA infoLine, write nothing.
+			else:
+				outputIndexFile.write(allPeptides[key][item]['organismID'])		##	Organism Name
 			outputIndexFile.write(',')
 			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))		##	Peptide start position in full protein sequence
 			outputIndexFile.write('\n')
