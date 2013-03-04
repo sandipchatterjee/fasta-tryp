@@ -9,8 +9,6 @@
 ######	output index file in a more standard database format?
 
 import sys
-import pprint	##	Pretty Print
-import json
 
 if len(sys.argv) != 2:
 	print 'Need one argument -- a filename'
@@ -128,33 +126,20 @@ def parseFastaRecord(fastaRecord):
 ##	output list format: Dictionary in which each Peptide sequence (key) is mapped to a list of length >= 1
 ##	output list format: Each list item is a dictionary of information containing the source of the peptide
 ##	output list format: One peptide may map to one or more proteins
-############# need to append protein info for redundant peptides!! #############
+############# protPosition doesn't work properly when there are two identical tryptic peptides in a protein sequence #############
+############# but no way to distinguish these by mass spec anyway... 												 #############
 def registerPeptides(fastaRecord):
 
-	print "allPeptides, before registering"
-	pp1 = pprint.PrettyPrinter()
-	pp1.pprint(allPeptides)
-
 	for peptide in fastaRecord[1]:
-		if peptide in allPeptides:
+		if peptide not in allPeptides:
+			allPeptides[peptide] = []		##	initialize list of protein records for new peptide
 
-			NCBIIDTemp = fastaRecord[0]['NCBIID']
-			proteinNameTemp = fastaRecord[0]['proteinName']
-			organismIDTemp = fastaRecord[0]['organismID']
-			protPositionTemp = fastaRecord[0]['protSeq'].find(peptide)
+		NCBIIDTemp = fastaRecord[0]['NCBIID']
+		proteinNameTemp = fastaRecord[0]['proteinName']
+		organismIDTemp = fastaRecord[0]['organismID']
+		protPositionTemp = fastaRecord[0]['protSeq'].find(peptide)
 
-			allPeptides[peptide].append({'NCBIID': NCBIIDTemp,'proteinName': proteinNameTemp, 'organismID': organismIDTemp,'protPosition': protPositionTemp})
-		else:
-			allPeptides[peptide] = []
-
-			NCBIIDTemp = fastaRecord[0]['NCBIID']
-			proteinNameTemp = fastaRecord[0]['proteinName']
-			organismIDTemp = fastaRecord[0]['organismID']
-			protPositionTemp = fastaRecord[0]['protSeq'].find(peptide)
-			allPeptides[peptide].append({'NCBIID': NCBIIDTemp,'proteinName': proteinNameTemp, 'organismID': organismIDTemp,'protPosition': protPositionTemp})
-
-			pp1 = pprint.PrettyPrinter()	#remove
-			pp1.pprint(allPeptides)			#remove
+		allPeptides[peptide].append({'NCBIID': NCBIIDTemp,'proteinName': proteinNameTemp, 'organismID': organismIDTemp,'protPosition': protPositionTemp})
 
 	return allPeptides
 
@@ -181,8 +166,8 @@ def readFasta():
 			outputFile.write(line)
 		else:
 			outputFile.write(line.strip('\n').strip('\t'))
-	outputFileLength = outputFile.tell()
-	print "outputFileLength", outputFileLength
+
+
 	outputFile.close()
 	inputFile.close()
 
@@ -253,13 +238,15 @@ def outputFasta(allPeptides):
 		outputIndexFile.write('>'+'peptide'+str(peptideCount)+'\n')
 		peptideCount += 1
 		for item in range(len(allPeptides[key])):
-			outputIndexFile.write(allPeptides[key][item]['NCBIID'])
+			outputIndexFile.write(key)		##	peptide sequence
 			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['proteinName'])
+			outputIndexFile.write(allPeptides[key][item]['NCBIID'])		##	NCBI Protein ID
 			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['organismID'])
+			outputIndexFile.write(allPeptides[key][item]['proteinName'])	##	Protein Name
 			outputIndexFile.write(',')
-			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))
+			outputIndexFile.write(allPeptides[key][item]['organismID'])		##	Organism Name
+			outputIndexFile.write(',')
+			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))		##	Peptide start position in full protein sequence
 			outputIndexFile.write('\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex'
@@ -270,18 +257,6 @@ def outputFasta(allPeptides):
 readFasta()
 outputFasta(allPeptides)
 
-print "----------------------------------------------------------"
-print "allPeptides dictionary: "
-#print allPeptides
-
-pp = pprint.PrettyPrinter()
-pp.pprint(allPeptides)
-
-print "length of dictionary: (number of unique peptides) "
-print len(allPeptides)
-
-print "----------------------------------------------------------"
-#print allPeptides
+print "Length of nonredundant peptide dictionary: ", len(allPeptides)
 
 ###################################################################################################
-
