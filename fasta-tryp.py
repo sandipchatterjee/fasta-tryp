@@ -1,12 +1,21 @@
 #! /usr/bin/python
 
 ##	fasta-tryp.py
-##	For generating a nonredundant peptide database in FASTA format from an input FASTA-formatted protein database
 ##	Sandip Chatterjee
+##
+##	Usage:
+##		>>python fasta-tryp.py proteome_fasta_file.fasta
+##
+##	For generating a nonredundant peptide database in FASTA format from an input FASTA-formatted protein database
+##	1) reads in all proteins from input file (standard FASTA format)
+##	2) generates tryptic peptides from each protein based on PeptideCutter rules
+##	3) generates nonredundant dictionary of tryptic peptides of length > 6
+##	4) outputs a nonredundant peptide file for use in spectral matching searches
+##	5) outputs an index file with parent proteins and organisms for each peptide 
+##	(all output on one line; can be searched using grep '>peptide1234|' < *.fastaindex)
 
 ######	to do:
 ######	account for half-tryptic peptides?
-######	output index file in a more standard database format?
 
 import sys
 
@@ -235,7 +244,7 @@ def outputFasta(allPeptides):
 
 	peptideCount = 1
 	for key in allPeptides:
-		outputIndexFile.write('>'+'peptide'+str(peptideCount)+'\n')
+		outputIndexFile.write('>'+'peptide'+str(peptideCount)+'|')	## pipe character after peptide ID
 		peptideCount += 1
 		for item in range(len(allPeptides[key])):
 			outputIndexFile.write(key)		##	peptide sequence
@@ -250,7 +259,8 @@ def outputFasta(allPeptides):
 				outputIndexFile.write(allPeptides[key][item]['organismID'])		##	Organism Name
 			outputIndexFile.write(',')
 			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))		##	Peptide start position in full protein sequence
-			outputIndexFile.write('\n')
+			outputIndexFile.write('|')	##	pipe character between records
+		outputIndexFile.write('\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex'
 	outputIndexFile.close()
@@ -260,6 +270,6 @@ def outputFasta(allPeptides):
 readFasta()
 outputFasta(allPeptides)
 
-print "Length of nonredundant peptide dictionary: ", len(allPeptides)
+print "Finished"
 
 ###################################################################################################
