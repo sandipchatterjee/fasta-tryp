@@ -171,8 +171,7 @@ def readFasta():
 
 	for line in inputFile:				##	generates a properly formatted FASTA file. InfoLine ('>') on one line, entire sequence on next line
 		if '>' in line:
-			outputFile.write('\n')		##	keep in mind that this prints a blank line at the beginning of the reformatted file
-			outputFile.write(line)
+			outputFile.write('\n'+line)		##	keep in mind that this prints a blank line at the beginning of the reformatted file
 		else:
 			outputFile.write(line.strip('\n').strip('\t'))
 
@@ -232,9 +231,8 @@ def outputFasta(allPeptides):
 
 	peptideCount = 1
 	for key in allPeptides:
-		outputFastaFile.write('>'+'peptide'+str(peptideCount)+'\n')
+		outputFastaFile.write('>'+'peptide'+str(peptideCount)+'\n'+key+'\n')
 		peptideCount += 1
-		outputFastaFile.write(key+'\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fasta'
 	outputFastaFile.close()
@@ -247,19 +245,10 @@ def outputFasta(allPeptides):
 		outputIndexFile.write('>'+'peptide'+str(peptideCount)+'|')	## pipe character after peptide ID
 		peptideCount += 1
 		for item in range(len(allPeptides[key])):
-			outputIndexFile.write(key)		##	peptide sequence
-			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['NCBIID'])		##	NCBI Protein ID
-			outputIndexFile.write(',')
-			outputIndexFile.write(allPeptides[key][item]['proteinName'])	##	Protein Name
-			outputIndexFile.write(',')
-			if allPeptides[key][item]['organismID'] == None:
-				outputIndexFile.write('')								##	if no Organism Name in original FASTA infoLine, write nothing.
+			if allPeptides[key][item]['organismID']:
+				outputIndexFile.write(key+','+allPeptides[key][item]['NCBIID']+','+allPeptides[key][item]['proteinName']+','+allPeptides[key][item]['organismID']+','+str(allPeptides[key][item]['protPosition'])+'|')
 			else:
-				outputIndexFile.write(allPeptides[key][item]['organismID'])		##	Organism Name
-			outputIndexFile.write(',')
-			outputIndexFile.write(str(allPeptides[key][item]['protPosition']))		##	Peptide start position in full protein sequence
-			outputIndexFile.write('|')	##	pipe character between records
+				outputIndexFile.write(key+','+allPeptides[key][item]['NCBIID']+','+allPeptides[key][item]['proteinName']+','+''+','+str(allPeptides[key][item]['protPosition'])+'|')
 		outputIndexFile.write('\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fastaindex'
