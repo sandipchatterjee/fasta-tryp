@@ -18,6 +18,7 @@
 ######	account for half-tryptic peptides?
 
 import sys
+import re
 
 if len(sys.argv) != 2:
 	print 'Need one argument -- a filename'
@@ -81,7 +82,8 @@ def trypsinDigest(protSeq):
 
 	trypticPeptides = trypticProtSeq.split('_')		##	cleave at all sites in protSeq marked by '_'
 
-	trypticPeptides = filter(lambda x: len(x)>6,trypticPeptides)			##	only keep tryptic peptides with length > 6
+#	trypticPeptides = filter(lambda x: len(x)>6,trypticPeptides)			##	only keep tryptic peptides with length > 6
+	trypticPeptides = [pep for pep in trypticPeptides if len(pep)>6]		##	only keep tryptic peptides with length > 6
 
 	return trypticPeptides
 
@@ -92,7 +94,6 @@ def trypsinDigest(protSeq):
 ##	output: a two-item list with the format [{'NCBIID':VALUE, 'proteinName':VALUE, 'organismID':VALUE, 'protSeq':VALUE, 'protPosition': -2}, [PEPTIDE1, PEPTIDE2, PEPTIDE3, ...]]
 ##	output details: calls trypsinDigest() function using given protein sequence from fastaRecord
 
-#################### This probably isn't the best way to split the informational line... using Split('[') -- because not every entry has brackets ######################
 def parseFastaRecord(fastaRecord):
 	
 	parsedFastaRecord = [{},[]]
@@ -109,18 +110,14 @@ def parseFastaRecord(fastaRecord):
 	proteinName = splitInfoLine1[4].split('[')[0]	##	remove Organism info (if present)
 
 	##	...for organism ID
-	splitInfoLine1 = infoLine.split('[')
-	if ']' in splitInfoLine1[len(splitInfoLine1)-1]:	
-		organismID = splitInfoLine1[len(splitInfoLine1)-1].strip(']')	## working for now, but need to account for entries without brackets in infoLine []
-	else:
-		organismID = None
+	##	use re module below to find text within brackets []: re.findall(r"(?<=\[)[^\[]+(?=\])",infoLine)
 
 	##	Obtaining protein sequence
 	protSeq = fastaRecord[1]
 
 	## construct dictionary
 
-	parsedFastaRecord = [{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': organismID, 'protSeq': protSeq, 'protPosition': -2}, trypsinDigest(protSeq)]
+	parsedFastaRecord = [{'NCBIID': NCBIID, 'proteinName': proteinName, 'organismID': ''.join(re.findall(r"(?<=\[)[^\[]+(?=\])",infoLine)), 'protSeq': protSeq, 'protPosition': -2}, trypsinDigest(protSeq)]
 
 	return parsedFastaRecord
 
@@ -246,8 +243,10 @@ def outputFasta(allPeptides):
 		peptideCount += 1
 		for item in range(len(allPeptides[key])):
 			if allPeptides[key][item]['organismID']:
+#				outputIndexFile.write(''.join([key,',',allPeptides[key][item]['NCBIID'],',',allPeptides[key][item]['proteinName'],',',allPeptides[key][item]['organismID'],',',str(allPeptides[key][item]['protPosition']),'|']))
 				outputIndexFile.write(key+','+allPeptides[key][item]['NCBIID']+','+allPeptides[key][item]['proteinName']+','+allPeptides[key][item]['organismID']+','+str(allPeptides[key][item]['protPosition'])+'|')
 			else:
+#				outputIndexFile.write(''.join([key,',',allPeptides[key][item]['NCBIID'],',',allPeptides[key][item]['proteinName'],',','',',',str(allPeptides[key][item]['protPosition']),'|']))
 				outputIndexFile.write(key+','+allPeptides[key][item]['NCBIID']+','+allPeptides[key][item]['proteinName']+','+''+','+str(allPeptides[key][item]['protPosition'])+'|')
 		outputIndexFile.write('\n')
 
