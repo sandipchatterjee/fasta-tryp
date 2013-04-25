@@ -19,6 +19,7 @@
 
 import sys
 import re
+from Bio import SeqIO
 
 if len(sys.argv) != 2:
 	print 'Need one argument -- a filename'
@@ -153,43 +154,15 @@ def registerPeptides(fastaRecord):
 
 
 ##	function readFasta()
-##	Reads in all entries from a protein FASTA-format file (one entry at a time)
+##	Reads in all entries from a protein FASTA-format file using BioPython's SeqIO module (one entry at a time)
 ##	Calls function parseFastaRecord() for each imported record
 ##	Calls registerPeptides() for each parsedFastaRecord
 ##	input: FASTA-formatted record file
 ##	output: complete allPeptides dictionary
 def readFasta():
-	fileName = sys.argv[1]
-	fileList = []
-	fastaRecord = []
-	inputFile = open(fileName, "r")
-	
-	outputFile = open('reformatted_'+fileName, "w")
 
-	for line in inputFile:				##	generates a properly formatted FASTA file. InfoLine ('>') on one line, entire sequence on next line
-		if '>' in line:
-			outputFile.write('\n'+line)		##	keep in mind that this prints a blank line at the beginning of the reformatted file
-		else:
-			outputFile.write(line.strip('\n').strip('\t'))
-
-
-	outputFile.close()
-	inputFile.close()
-
-	inputFile = open('reformatted_'+fileName, "r")	##	read in properly formatted FASTA file (one line per protein sequence)
-	inputFile.readline()							##	read blank line at beginning of reformatted file
-
-	while True:
-		line1 = inputFile.readline().strip('\n')
-		line2 = inputFile.readline().strip('\n')
-		if not line1:
-			break
-		fastaRecord.append(line1)	##	info line of FASTA record ('>')
-		fastaRecord.append(line2)	##	sequence line of FASTA record
-		allPeptides = registerPeptides(parseFastaRecord(fastaRecord))
-		fastaRecord = []
-
-	inputFile.close()
+	for seq_record in SeqIO.parse(sys.argv[1],'fasta'):
+		allPeptides = registerPeptides(parseFastaRecord([seq_record.description,str(seq_record.seq)]))
 
 	return allPeptides
 
