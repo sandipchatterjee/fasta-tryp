@@ -199,10 +199,13 @@ def outputFasta(allPeptides):
 	##	generate FASTA file
 	outputFastaFile = open(sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fasta', 'w')
 
-	peptideCount = 1
-	for key in allPeptides:
-		outputFastaFile.write('>'+'peptide'+str(peptideCount)+'\n'+key+'\n')
-		peptideCount += 1
+#	peptideCount = 1
+#	for key in allPeptides:
+#		outputFastaFile.write('>peptide'+str(peptideCount)+'\n'+key+'\n')
+#		peptideCount += 1
+
+	for num,key in enumerate(allPeptides.keys()):
+		outputFastaFile.write('>peptide'+str(num+1)+'\n'+key+'\n')
 
 	print "Generated file "+sys.argv[1].replace('.fasta','')+'_peptides_nonredundant'+'.fasta'
 	outputFastaFile.close()
